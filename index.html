@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<!--
+  HÁBLALE: manda tu voz a los audífonos de la tele.
+  Sube este archivo a internet (por ejemplo, GitHub Pages) y ábrelo en los dos aparatos.
+-->
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Háblale</title>
+
+<!-- Letra Atkinson Hyperlegible: diseñada para leerse fácil, incluso con poca vista -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+  /* =============== COLORES =============== */
+  :root {                       /* modo claro */
+    --fondo: #e9eef3;
+    --superficie: #f7f9fb;
+    --tinta: #15212e;
+    --suave: #566677;
+    --linea: #c6d1dc;
+    --senal: #1c6fb0;           /* azul "señal", como las barras de la base */
+    --sobre-senal: #ffffff;
+    --aire: #f0a43a;            /* ámbar "al aire" mientras hablas */
+    --sobre-aire: #1d1408;
+    --halo-aire: rgba(240, 164, 58, 0.45);
+    --barra-apagada: #d2dbe4;
+    --alerta: #a3361b;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {                     /* modo oscuro */
+      --fondo: #0f1a26;
+      --superficie: #172535;
+      --tinta: #e6eef5;
+      --suave: #8fa3b6;
+      --linea: #2b3e53;
+      --senal: #8ccdf2;
+      --sobre-senal: #0c1a27;
+      --aire: #f2b04e;
+      --sobre-aire: #1d1408;
+      --halo-aire: rgba(242, 176, 78, 0.4);
+      --barra-apagada: #22354a;
+      --alerta: #ff9f84;
+      color-scheme: dark;
+    }
+  }
+
+  /* =============== GENERAL =============== */
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--fondo);
+    color: var(--tinta);
+    font-family: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 19px;
+    line-height: 1.5;
+    padding: max(32px, env(safe-area-inset-top)) 22px max(32px, env(safe-area-inset-bottom));
+  }
+  main { max-width: 440px; margin: 0 auto; }
+  button { font: inherit; cursor: pointer; }
+  button:focus-visible { outline: 3px solid var(--senal); outline-offset: 3px; }
+  [hidden] { display: none !important; }
+
+  /* =============== PANTALLA DE INICIO =============== */
+  h1 { font-size: 2.6rem; line-height: 1.05; margin: 0 0 6px; }
+  .lema { color: var(--suave); margin: 0 0 36px; }
+  label { display: block; font-weight: 700; margin-bottom: 8px; }
+  input {
+    width: 100%;
+    font: inherit;
+    padding: 14px 16px;
+    border: 2px solid var(--linea);
+    border-radius: 12px;
+    background: var(--superficie);
+    color: var(--tinta);
+  }
+  input:focus { outline: none; border-color: var(--senal); }
+  .ayuda { color: var(--suave); font-size: 0.88rem; margin: 8px 0 0; }
+  .aviso { color: var(--alerta); font-weight: 700; min-height: 1.5em; margin: 14px 0 18px; }
+
+  .modo {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-weight: 700;
+    text-align: left;
+    padding: 18px 20px;
+    margin-bottom: 12px;
+    border-radius: 16px;
+  }
+  .modo .icono { font-size: 1.7rem; line-height: 1; }
+  .modo.principal { background: var(--senal); color: var(--sobre-senal); border: 2px solid var(--senal); }
+  .modo.secundario { background: transparent; color: var(--tinta); border: 2px solid var(--linea); }
+
+  /* =============== PANTALLAS DE LOS APARATOS =============== */
+  .aparato { text-align: center; padding-top: 8vh; }
+  .estado { font-size: 1.45rem; font-weight: 700; line-height: 1.3; min-height: 2.6em; margin: 28px 0 10px; }
+  .nota { color: var(--suave); font-size: 0.95rem; margin: 0; }
+
+  /* Las 5 barras de nivel, como en la pantallita de la base Sennheiser */
+  .barras { display: flex; justify-content: center; gap: 10px; }
+  .barra { width: 46px; height: 12px; border-radius: 6px; background: var(--barra-apagada); }
+  .barra.encendida { background: var(--senal); box-shadow: 0 0 14px var(--senal); }
+
+  .boton-suave {
+    margin-top: 28px;
+    padding: 10px 20px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    border-radius: 999px;
+    border: 2px solid var(--linea);
+    background: transparent;
+    color: var(--tinta);
+  }
+
+  /* El botón grande para hablar */
+  #btnMicro {
+    display: block;
+    width: 220px;
+    height: 220px;
+    margin: 0 auto;
+    border: none;
+    border-radius: 50%;
+    font-size: 1.7rem;
+    font-weight: 700;
+    background: var(--senal);
+    color: var(--sobre-senal);
+    transition: transform 0.1s, background-color 0.2s;
+  }
+  #btnMicro:active { transform: scale(0.97); }
+  #btnMicro.en-llamada { background: var(--aire); color: var(--sobre-aire); }
+  #btnMicro.al-aire { animation: al-aire 1.6s ease-out infinite; }
+  @keyframes al-aire {
+    from { box-shadow: 0 0 0 0 var(--halo-aire); }
+    to   { box-shadow: 0 0 0 30px transparent; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #btnMicro.al-aire { animation: none; }
+  }
+</style>
+</head>
+<body>
+<main>
+
+  <!-- ========== PANTALLA 1: elegir qué hace este aparato ========== -->
+  <section id="inicio">
+    <h1>Háblale</h1>
+    <p class="lema">Tu voz, directo en sus audífonos de la tele.</p>
+
+    <label for="palabra">Palabra secreta</label>
+    <input id="palabra" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="ej. girasol-azul-1987">
+    <p class="ayuda">La misma en los dos aparatos, y difícil de adivinar.</p>
+    <p class="aviso" id="aviso" role="status"></p>
+
+    <button class="modo principal" id="btnModoHablar">
+      <span class="icono" aria-hidden="true">🎙️</span>Quiero hablarle
+    </button>
+    <button class="modo secundario" id="btnModoTele">
+      <span class="icono" aria-hidden="true">📺</span>Este aparato está junto a la tele
+    </button>
+  </section>
+
+  <!-- ========== PANTALLA 2: el aparato que se queda junto a la tele ========== -->
+  <section id="tele" class="aparato" hidden>
+    <div class="barras" aria-hidden="true">
+      <span class="barra"></span><span class="barra"></span><span class="barra"></span><span class="barra"></span><span class="barra"></span>
+    </div>
+    <p class="estado" id="estadoTele" role="status">Conectando…</p>
+    <p class="nota">Deja esta pantalla abierta y el aparato cargando.</p>
+    <button class="boton-suave" id="btnProbar">Probar aviso</button>
+    <audio id="voz"></audio>
+  </section>
+
+  <!-- ========== PANTALLA 3: tu celular ========== -->
+  <section id="hablar" class="aparato" hidden>
+    <button id="btnMicro">Hablar</button>
+    <p class="estado" id="estadoHablar" role="status">Toca el botón para hablarle.</p>
+  </section>
+
+</main>
+
+<!-- PeerJS: una librería que conecta dos navegadores directamente -->
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.5/dist/peerjs.min.js"></script>
+
+<script>
+// ¿CÓMO FUNCIONA?
+// Esta misma página tiene dos modos:
+//  - En el aparato junto a la tele: se conecta a PeerJS usando tu palabra secreta
+//    como "número de teléfono" y contesta sola cuando la llamas.
+//  - En tu celular: al tocar "Hablar", pide el micrófono y llama a ese número.
+// PeerJS solo ayuda a que los dos aparatos se encuentren;
+// después tu voz viaja directo de uno al otro (con una tecnología llamada WebRTC).
+
+
+// =====================================================================
+// 1. COSAS QUE USAN LOS DOS MODOS
+// =====================================================================
+const elemento = (id) => document.getElementById(id);
+const campoPalabra = elemento('palabra');
+let numeroTele = null;   // el "número de teléfono" de la tele dentro de PeerJS
+
+// Recordamos la palabra secreta en este aparato para no escribirla cada vez
+try { campoPalabra.value = localStorage.getItem('palabra') || ''; } catch (e) {}
+
+// Convierte la palabra secreta en el número de la tele
+function calcularNumeroTele() {
+  const limpia = campoPalabra.value.trim().toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')   // deja solo letras, números y guiones
+    .replace(/^-+|-+$/g, '');      // quita los guiones de las puntas
+  if (limpia.length < 6) {
+    elemento('aviso').textContent = 'Escribe una palabra secreta de al menos 6 letras o números.';
+    return null;
+  }
+  try { localStorage.setItem('palabra', campoPalabra.value.trim()); } catch (e) {}
+  return 'hablale-' + limpia;
+}
+
+// Revisa que la librería PeerJS se haya descargado bien
+function peerjsListo() {
+  if (typeof Peer === 'undefined') {
+    elemento('aviso').textContent = 'No se pudo cargar PeerJS. Revisa el internet (en la vista previa de Claude no funciona).';
+    return false;
+  }
+  return true;
+}
+
+// Muestra una pantalla y esconde las demás
+function mostrarPantalla(id) {
+  for (const pantalla of document.querySelectorAll('section')) {
+    pantalla.hidden = (pantalla.id !== id);
+  }
+}
+
+
+// =====================================================================
+// 2. MODO TELE: contesta sola y reproduce tu voz
+// =====================================================================
+let audioCtx = null;    // el "motor de sonido" del navegador
+let medidor = null;     // mide el volumen para mover las barras
+let fuenteVoz = null;   // tu voz conectada al medidor
+let peerTele = null;    // la conexión de la tele con el servidor de PeerJS
+let reintento = null;   // temporizador para reconectar si se corta
+
+elemento('btnModoTele').onclick = () => {
+  numeroTele = calcularNumeroTele();
+  if (!numeroTele || !peerjsListo()) return;
+  mostrarPantalla('tele');
+
+  // Los navegadores solo dejan sonar audio después de un toque: este es ese toque
+  audioCtx = new AudioContext();
+  audioCtx.resume();
+
+  // El medidor va a un "volumen 0": así funciona sin que el sonido salga dos veces
+  medidor = audioCtx.createAnalyser();
+  medidor.fftSize = 512;
+  const mudo = audioCtx.createGain();
+  mudo.gain.value = 0;
+  medidor.connect(mudo);
+  mudo.connect(audioCtx.destination);
+  dibujarBarras();
+
+  mantenerPantallaEncendida();
+  conectarTele();
+};
+
+function conectarTele() {
+  reintento = null;
+  peerTele = new Peer(numeroTele);
+
+  peerTele.on('open', () => ponerEstadoTele('Lista. Esperando tu voz.'));
+
+  // Cuando llamas desde tu celular, la tele contesta sola
+  peerTele.on('call', (llamada) => {
+    // Contestamos con "silencio": así tu celular sabe que ya se conectó
+    const silencio = audioCtx.createMediaStreamDestination().stream;
+    llamada.answer(silencio);
+
+    let yaSono = false;
+    llamada.on('stream', (tuVoz) => {
+      if (yaSono) return;                 // a veces este evento llega dos veces
+      yaSono = true;
+      sonarAviso();                       // "ding-dong" suave antes de tu voz
+
+      const voz = elemento('voz');
+      voz.srcObject = tuVoz;
+      voz.play().catch(() => ponerEstadoTele('Toca la pantalla para activar el sonido.'));
+
+      fuenteVoz = audioCtx.createMediaStreamSource(tuVoz);
+      fuenteVoz.connect(medidor);         // solo para mover las barras
+      ponerEstadoTele('Recibiendo tu voz…');
+    });
+
+    llamada.on('close', () => {
+      elemento('voz').srcObject = null;
+      if (fuenteVoz) { fuenteVoz.disconnect(); fuenteVoz = null; }
+      if (!reintento) ponerEstadoTele('Lista. Esperando tu voz.');
+    });
+  });
+
+  // Si algo falla (por ejemplo, se cae el wifi), vuelve a intentar sola
+  peerTele.on('disconnected', () => reintentar('Se cortó la conexión.'));
+  peerTele.on('error', (err) => {
+    if (err.type === 'unavailable-id') reintentar('Esta palabra ya está abierta en otro aparato o pestaña.');
+    else reintentar('No hay conexión con el servidor.');
+  });
+}
+
+function reintentar(motivo) {
+  if (reintento) return;                  // ya hay un reintento en camino
+  ponerEstadoTele(motivo + ' Reintento en 5 segundos…');
+  reintento = setTimeout(conectarTele, 5000);
+  peerTele.destroy();                     // cerramos la conexión vieja
+}
+
+// "Ding-dong" suave antes de tu voz, para no asustar a nadie
+function sonarAviso() {
+  audioCtx.resume();
+  [880, 660].forEach((frecuencia, i) => {
+    const inicio = audioCtx.currentTime + i * 0.35;
+    const nota = audioCtx.createOscillator();
+    const volumen = audioCtx.createGain();
+    nota.frequency.value = frecuencia;
+    volumen.gain.setValueAtTime(0.0001, inicio);
+    volumen.gain.exponentialRampToValueAtTime(0.25, inicio + 0.02);  // 0.25 = qué tan fuerte suena
+    volumen.gain.exponentialRampToValueAtTime(0.0001, inicio + 0.6);
+    nota.connect(volumen);
+    volumen.connect(audioCtx.destination);  // a los audífonos
+    volumen.connect(medidor);               // a las barras
+    nota.start(inicio);
+    nota.stop(inicio + 0.65);
+  });
+}
+elemento('btnProbar').onclick = sonarAviso;
+
+// Enciende de 0 a 5 barras según qué tan fuerte llega el sonido
+const barras = document.querySelectorAll('.barra');
+const muestras = new Uint8Array(512);
+function dibujarBarras() {
+  medidor.getByteTimeDomainData(muestras);
+  let pico = 0;
+  for (const m of muestras) pico = Math.max(pico, Math.abs(m - 128));  // 128 = silencio
+  const encendidas = Math.min(5, Math.round(pico / 10));
+  barras.forEach((barra, i) => barra.classList.toggle('encendida', i < encendidas));
+  requestAnimationFrame(dibujarBarras);
+}
+
+// Si el sonido quedó bloqueado, cualquier toque en la pantalla lo reactiva
+document.addEventListener('click', () => {
+  if (!audioCtx) return;
+  audioCtx.resume();
+  const voz = elemento('voz');
+  if (voz.srcObject && voz.paused) voz.play().catch(() => {});
+});
+
+// Evita que la pantalla se apague (si el navegador lo permite)
+async function mantenerPantallaEncendida() {
+  try { await navigator.wakeLock.request('screen'); } catch (e) {}
+}
+document.addEventListener('visibilitychange', () => {
+  if (audioCtx && document.visibilityState === 'visible') mantenerPantallaEncendida();
+});
+
+function ponerEstadoTele(texto) { elemento('estadoTele').textContent = texto; }
+
+
+// =====================================================================
+// 3. MODO HABLAR: manda tu voz a la tele
+// =====================================================================
+let peerHablar = null;   // tu conexión con el servidor de PeerJS
+let micro = null;        // el sonido de tu micrófono
+let enLlamada = false;
+let temporizador = null;
+
+elemento('btnModoHablar').onclick = () => {
+  numeroTele = calcularNumeroTele();
+  if (!numeroTele || !peerjsListo()) return;
+  mostrarPantalla('hablar');
+};
+
+elemento('btnMicro').onclick = async () => {
+  if (enLlamada) { terminar('Llamada terminada. Toca para volver a hablar.'); return; }
+
+  enLlamada = true;
+  const boton = elemento('btnMicro');
+  boton.textContent = 'Terminar';
+  boton.classList.add('en-llamada');
+  ponerEstadoHablar('Pidiendo el micrófono…');
+
+  // Paso 1: pedir permiso para usar el micrófono
+  try {
+    micro = await navigator.mediaDevices.getUserMedia({ audio: true });
+  } catch (e) {
+    terminar('Sin permiso para el micrófono. Actívalo en los ajustes del navegador.');
+    return;
+  }
+  if (!enLlamada) { apagarMicro(); return; }   // tocaste "Terminar" mientras tanto
+
+  // Paso 2: conectarse al servidor y llamar a la tele
+  ponerEstadoHablar('Llamando a la tele…');
+  const peer = new Peer();               // a tu celular le toca un número cualquiera
+  peerHablar = peer;
+  temporizador = setTimeout(() => terminar('La tele no contestó. Revisa que la página siga abierta allá.'), 15000);
+
+  peer.on('open', () => {
+    const llamada = peer.call(numeroTele, micro);
+
+    // Paso 3: la tele contestó; esperamos el "ding-dong" y ya puedes hablar
+    llamada.on('stream', () => {
+      clearTimeout(temporizador);
+      ponerEstadoHablar('Sonando el aviso…');
+      temporizador = setTimeout(() => {
+        ponerEstadoHablar('Ya puedes hablar.');
+        boton.classList.add('al-aire');
+      }, 1200);
+    });
+    llamada.on('close', () => terminar('Llamada terminada. Toca para volver a hablar.'));
+  });
+
+  peer.on('error', (err) => {
+    if (err.type === 'peer-unavailable') terminar('No encuentro la tele. Abre la página allá con la misma palabra secreta.');
+    else terminar('No hay conexión con el servidor. Revisa el internet y vuelve a intentar.');
+  });
+};
+
+// Cuelga, apaga el micrófono y deja todo listo para la próxima vez
+function terminar(mensaje) {
+  if (!enLlamada) return;                // ya estaba terminado
+  enLlamada = false;
+  clearTimeout(temporizador);
+  apagarMicro();
+  if (peerHablar) { peerHablar.destroy(); peerHablar = null; }
+  const boton = elemento('btnMicro');
+  boton.textContent = 'Hablar';
+  boton.classList.remove('en-llamada', 'al-aire');
+  ponerEstadoHablar(mensaje);
+}
+
+function apagarMicro() {
+  if (micro) { micro.getTracks().forEach((pista) => pista.stop()); micro = null; }
+}
+
+function ponerEstadoHablar(texto) { elemento('estadoHablar').textContent = texto; }
+</script>
+</body>
+</html>
